@@ -217,28 +217,20 @@ void pinAvailableCore() {
 }
 
 /**
-  * Returns the CPU ID of coreId's hypertwin.  If there is no hypertwin, return -1.
-  * The returned ID matches what would be returned by a thread on the hypertwin
-  * (if a hypertwin exists) that ran sched_getcpu().
+  * Returns the CPU ID of the physical core corresponding to coreId.
+  * The physical core is defined as the lowest-numbered sibling of coreId.
   *
   * \param coreId
   *     The coreId whose hypertwin's ID will be returned.
   */
-int getHyperTwin(int coreId) {
+int getPhysicalCore(int coreId) {
     // This file contains the siblings of core coreId.
     std::string siblingFilePath = "/sys/devices/system/cpu/cpu" + std::to_string(coreId) + "/topology/thread_siblings_list";
     FILE* siblingFile = fopen(siblingFilePath.c_str(), "r");
-    int cpu1;
-    int cpu2;
-    // If there is a hypertwin, the file is of the form "int1,int2", where int1 < int2
-    // and one is coreId and the other is the hypertwin's ID.
-    // Return -1 if no hypertwin found.
-    if (fscanf(siblingFile, "%d,%d", &cpu1, &cpu2) < 2)
-        return -1;
-    if (coreId == cpu1)
-        return cpu2;
-    else
-        return cpu1;
+    int physicalCoreId;
+    // The first cpuid in the file is always that of the physical core
+    fscanf(siblingFile, "%d", &physicalCoreId);
+    return physicalCoreId;
 }
 
 
